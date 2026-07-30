@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Çakır Otel</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#121212;
+padding:20px;
+color:white;
+}
+h1{
+text-align:center;
+margin-bottom:10px;
+clor:white;
+}
+
+#datetime{
+text-align:center;
+font-size:20px;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+.stats{
+display:flex;
+gap:10px;
+margin-bottom:20px;
+}
+
+.stat{
+flex:1;
+padding:12px;
+border-radius:12px;
+text-align:center;
+font-weight:bold;
+color:white;
+}
+
+.empty{background:#28a745;}
+.occupied-box{background:#dc3545;}
+.cleaning{background:#ffc107;color:black;}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(5,160px);
+justify-content:center;
+gap:15px;
+}
+
+.room{
+height:140px;
+border-radius:18px;
+display:flex;
+justify-content:center;
+align-items:center;
+text-align:center;
+font-weight:bold;
+cursor:pointer;
+color:white;
+box-shadow:0 4px 10px rgba(0,0,0,.15);
+}
+
+small{
+font-size:12px;
+}
+
+@keyframes shake{
+0%{transform:translateX(0);}
+25%{transform:translateX(-2px);}
+50%{transform:translateX(2px);}
+75%{transform:translateX(-2px);}
+100%{transform:translateX(0);}
+}
+
+.occupied{
+animation:shake .8s infinite;
+}
+button{
+width:100%;
+padding:15px;
+margin-top:20px;
+border:none;
+border-radius:12px;
+font-size:18px;
+cursor:pointer;
+background:#2c2c2c;
+color:white;
+}
+body.light{
+background:#f2f2f2;
+color:black;
+}
+
+body.dark{
+background:#121212;
+color:white;
+}
+
+body.dark h1{
+color:white;
+}
+
+body.dark button{
+background:#2c2c2c;
+color:white;
+}
+</style>
+</head>
+
+<body class="light">
+
+<script>
+if(prompt("Çakır Otel Şifresi")!=="cakir2026"){
+document.body.innerHTML="<h1>❌ Hatalı Şifre</h1>";
+throw new Error();
+}
+</script>
+
+<h1>🏨 Çakır Otel</h1>
+
+<div id="datetime"></div>
+
+<div class="stats">
+<div class="stat empty" id="emptyCount">Boş: 0</div>
+<div class="stat occupied-box" id="occupiedCount">Dolu: 0</div>
+<div class="stat cleaning" id="cleaningCount">Temizlik: 0</div>
+</div>
+
+<div id="rooms" class="grid"></div>
+
+<button onclick="resetAll()">🔄 Tüm Odaları Sıfırla</button>
+<button onclick="toggleTheme()">🌙 Tema Değiştir</button>
+
+<script>
+
+const roomNumbers=[
+"102","203","204","205","206",
+"207","208","209","310","311",
+"312","313","314","315","316"
+];
+
+const states=[
+{name:"Boş",color:"#28a745"},
+{name:"Dolu",color:"#dc3545"},
+{name:"Temizlik",color:"#ffc107"}
+];
+
+let roomStates=
+JSON.parse(
+localStorage.getItem("cakirOtel")
+) || {};
+
+let customerNames=
+JSON.parse(
+localStorage.getItem("cakirOtelNames")
+) || {};
+let customerPhones=
+JSON.parse(localStorage.getItem("cakirOtelPhones"))||{};
+
+let checkInDates=
+JSON.parse(
+localStorage.getItem("cakirOtelDates")
+) || {};
+
+roomNumbers.forEach(room=>{
+
+if(roomStates[room]==null){
+
+roomStates[room]=0;
+
+}
+
+});
+
+function save(){
+
+localStorage.setItem(
+"cakirOtel",
+JSON.stringify(roomStates)
+);
+
+localStorage.setItem(
+"cakirOtelNames",
+JSON.stringify(customerNames)
+);
+localStorage.setItem(
+"cakirOtelPhones",
+JSON.stringify(customerPhones)
+);
+
+localStorage.setItem(
+"cakirOtelDates",
+JSON.stringify(checkInDates)
+);
+
+}
+
+function render(){
+
+const container=
+document.getElementById("rooms");
+
+container.innerHTML="";
+
+let bos=0;
+let dolu=0;
+let temizlik=0;
+
+roomNumbers.forEach(room=>{
+
+const state=
+roomStates[room];
+
+if(state===0) bos++;
+if(state===1) dolu++;
+if(state===2) temizlik++;
+
+const div=
+document.createElement("div");
+
+div.className="room";
+
+if(state===1){
+div.classList.add("occupied");
+}
+
+div.style.background=
+states[state].color;
+
+if(state===2){
+div.style.color="black";
+}
+
+div.innerHTML=`
+<div>
+${room}<br>
+${states[state].name}
+${
+customerNames[room]
+?
+"<br><small>"+customerNames[room]+"</small>"+
+"<br><small>📞 "+customerPhones[room]+"</small>"+
+"<br><small>📅 "+checkInDates[room]+"</small>"
+:
+""
+}
+</div>
+`;
+
+div.onclick=()=>{
+
+if(roomStates[room]===0){
+const isim=
+prompt("Müşteri Adı");
+
+if(isim){
+
+const telefon=
+prompt("Telefon (isteğe bağlı)") || "";
+
+customerNames[room]=isim;
+
+customerPhones[room]=telefon;
+
+checkInDates[room]=
+new Date().toLocaleDateString("tr-TR");
+
+roomStates[room]=1;
+}
+
+}
+else if(roomStates[room]===1){
+
+roomStates[room]=2;
+
+}
+else{
+
+roomStates[room]=0;
+
+delete customerNames[room];
+
+delete checkInDates[room];
+
+}
+
+save();
+render();
+
+};
+
+container.appendChild(div);
+
+});
+
+document.getElementById(
+"emptyCount"
+).innerText=
+"Boş: "+bos;
+
+document.getElementById(
+"occupiedCount"
+).innerText=
+"Dolu: "+dolu;
+
+document.getElementById(
+"cleaningCount"
+).innerText=
+"Temizlik: "+temizlik;
+
+}
+
+function resetAll(){
+
+if(confirm(
+"Tüm odalar sıfırlansın mı?"
+)){
+
+roomNumbers.forEach(room=>{
+roomStates[room]=0;
+});
+
+customerNames={};
+checkInDates={};
+
+save();
+render();
+
+}
+
+}
+
+function updateDateTime(){
+
+const now=
+new Date();
+
+document.getElementById(
+"datetime"
+).innerHTML=
+"📅 "+
+now.toLocaleDateString("tr-TR")+
+" &nbsp;&nbsp; 🕒 "+
+now.toLocaleTimeString("tr-TR");
+
+}
+
+setInterval(
+updateDateTime,
+1000
+);
+
+updateDateTime();
+const savedTheme=
+localStorage.getItem("theme");
+
+if(savedTheme==="dark"){
+
+document.body.classList.remove("light");
+document.body.classList.add("dark");
+
+}
+render();
+function toggleTheme(){
+
+if(document.body.classList.contains("dark")){
+
+document.body.classList.remove("dark");
+document.body.classList.add("light");
+
+localStorage.setItem("theme","light");
+
+}else{
+
+document.body.classList.remove("light");
+document.body.classList.add("dark");
+
+localStorage.setItem("theme","dark");
+
+}
+
+}
+</script>
+</html>
